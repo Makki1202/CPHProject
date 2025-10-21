@@ -13,6 +13,7 @@ const std::string FOLDERPATH = "tests/";
 const std::string TESTPREFIX = "test0";
 const std::string FILEEXTENSION = ".swe";
 const int FILEAMOUNT = 7;
+const bool USEFILES = true;
 
 bool checkTStringAndFindRepeats(const std::string &t_string, std::map<char, int> &repeats, std::set<char> &upperCharsUsed, const std::string &s, bool &interestingLine) {
 
@@ -129,6 +130,7 @@ std::vector<std::string> simpleConvertStringToContainer(std::string&line)
 std::vector<std::string> convertStringToContainer(std::string&line, const std::string &s, const std::map<char, int> &repeats)
 {
     std::vector<std::string> values;
+    bool repeat  = repeats.find(line[0]) != repeats.end();
     // Find the part after ':'
     size_t colonPos = line.find(':');
     if (colonPos != std::string::npos) {
@@ -146,7 +148,7 @@ std::vector<std::string> convertStringToContainer(std::string&line, const std::s
                 }
                 bool tokenPossible = true;
 
-                if (repeats.count(line[0]) > 0)
+                if (repeat)
                 {
                     std::string repeatedString;
                     for (int i = 0; i < repeats.at(line[0]); i++)
@@ -217,7 +219,7 @@ void filterTstrings(std::vector<std::pair<std::string, bool>> &t_strings)
     
 }
 
-int runRemoveElementsFromSets(std::vector<std::pair<std::string, bool>> &t_strings, std::map<char, std::vector<std::string>> &Rsets, const std::string &s, std::map<char, std::string> &results, std::string &retMessage, const bool &all = false)
+int runRemoveElementsFromSets(std::vector<std::pair<std::string, bool>> &t_strings, std::map<char, std::vector<std::string>> &Rsets, const std::string &s, std::map<char, std::string> &results, const bool &all = false)
 {
     int retVal = 0;
     for (const auto& pattern : t_strings)
@@ -307,7 +309,6 @@ int runRemoveElementsFromSets(std::vector<std::pair<std::string, bool>> &t_strin
             }
             if (list.empty())
             {
-                retMessage = "NO";
                 return 1;
             }
         }
@@ -316,20 +317,23 @@ int runRemoveElementsFromSets(std::vector<std::pair<std::string, bool>> &t_strin
     return retVal;
 }
 
-std::map<char, std::string> runAllCombos(std::vector<std::pair<std::string, bool>> &t_strings, std::map<char, std::vector<std::string>> &Rsets, const std::string &s, std::string &retMessage)
+bool runAllCombos(std::vector<std::pair<std::string, bool>> &t_strings, std::map<char, std::vector<std::string>> &Rsets, std::map<char, std::string> &currResults, const std::string &s)
 {
     // Step 1: collect unique uppercase letters (order matters)
     std::map<char, std::string> currentElements;
     std::vector<char> variables;
     for (auto &[k, v] : Rsets)
     {
-        variables.push_back(k);
+        if (currResults.find(k) == currResults.end())
+        {
+            variables.push_back(k);
+        }
     }
 
     // Step 2: initialize index vector
     std::vector<size_t> indices(variables.size(), 0);
 
-    bool done = variables.empty();
+    bool done = false;
 
     // Step 3: generate all combinations
     while (!done)
@@ -364,8 +368,8 @@ std::map<char, std::string> runAllCombos(std::vector<std::pair<std::string, bool
         }
         if (match)
         {
-            retMessage = "YES";
-            return currentElements;
+            currResults.insert(currentElements.begin(), currentElements.end());
+            return true;
         }
 
         // Increment indices like a counter
@@ -382,33 +386,64 @@ std::map<char, std::string> runAllCombos(std::vector<std::pair<std::string, bool
         if (variables.empty()) break;
     }
 
-    return {};
+    return false;
 }
 
 int main() {
+    if (USEFILES)
+    {
+        solveFiles();
+    }
+    else
+    {
+        solveInput();
+    }
+}
+
+void solveInput()
+{
+    std::string retMessage = "";
+    std::map<char, std::string> results;
+    bool retVal = runTest("", results, retMessage);
+
+    std::cout << retMessage << std::endl;
+    if (retVal)
+    {
+        if (!results.empty())
+        {
+            std::cout << "Results:\n";
+            printReslt(results);
+        }
+    }
+}
+
+void solveFiles()
+{
     auto programStart = std::chrono::high_resolution_clock::now();
 
     for (int i = 1; i <= FILEAMOUNT; i++)
     {
         auto fileStart = std::chrono::high_resolution_clock::now();
+
         std::string retMessage = "";
         std::string file = std::string(TESTPREFIX + std::to_string(i) + FILEEXTENSION);
-        bool retVal = runTest(file, retMessage);
+        std::map<char, std::string> results;
+        bool retVal = runTest(file, results, retMessage);
+
+        std::cout << file << ": " << retMessage << std::endl;
         if (retVal)
         {
-            std::cout << file << ": " << retMessage << std::endl;
-    
-            auto end = std::chrono::high_resolution_clock::now();
-            // Calculate elapsed time in microseconds
-            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - fileStart);
+            if (!results.empty())
+            {
+                std::cout << file << " results:\n";
+                printReslt(results);
+            }
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        // Calculate elapsed time in microseconds
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - fileStart);
 
-            std::cout << file << " execution time: " << duration.count() << " us" << std::endl;
-        }
-        else
-        {
-            std::cout << file << ": " << retMessage << std::endl;
-        }
-        
+        std::cout << file << " execution time: " << duration.count() << " us" << std::endl;
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -417,6 +452,7 @@ int main() {
 
     std::cout << "Total execution time: " << duration.count() << " us" << std::endl;
 }
+
 bool isAllLowercase(const std::string& s) {
     return std::all_of(s.begin(), s.end(), [](unsigned char c) {
         return std::islower(c);
@@ -429,53 +465,121 @@ void removeCarriage(std::string &s)
     s.erase(s.size() - 1);
 }
 
-bool runTest(const std::string &file, std::string &retMessage)
+bool readInputFromStdin(int &n, std::string &s, std::vector<std::string> &Tstrings, std::vector<std::string> &Rsets)
+{
+    bool res = true;
+    if (!(std::cin >> n)) 
+    {
+        res = false;
+    } 
+    if (!(std::cin >> s)) 
+    {
+        res = false;
+    } 
+    if (s.empty() || !isAllLowercase(s))
+    {
+        // Format, string must be only lower case letters
+        res = false;
+    }
+    std::string line;
+    for (int i = 0; i < n; i++)
+    {
+        if (!(std::cin >> line)) 
+        {
+            res = false;
+        } 
+        Tstrings.push_back(line);
+    }
+
+    while (std::cin >> line)
+    {
+        Rsets.push_back(line);
+    }
+
+    return res;
+}
+bool readInputFromFile(const std::string &file, int &n, std::string &s, std::vector<std::string> &Tstrings, std::vector<std::string> &Rsets)
 {
     std::ifstream testFile(FOLDERPATH + file);
     if (!testFile)
     {
-        retMessage = "Error: Could not open file.\n";
+        std::cout << "Error: Could not open file.\n";
         return false;
     }
 
-    int n;
     if (!(testFile >> n))
     {
         // Format, first line must be an int
-        retMessage = "NO"; 
         testFile.close();
-        return true;
+        return false;
     }
-
     std::string line;
     std::getline(testFile, line); // consume the newline after the number
-    std::string s;
+
     std::getline(testFile, s); // Get string s
     removeCarriage(s);
-    if (s.empty() || !isAllLowercase(s))
-    {
-        // Format, string must be only lower case letters
-        retMessage = "NO";
-        testFile.close();
-        return true;
-    }
-
-    std::map<char, int> repeats; // Map for repetitions of uppercase letters
-    std::set<char> upperCharsUsed; // Set for seeing what R sets we need
-    std::vector<std::pair<std::string, bool>> t_strings; // t strings
 
     for (int i = 0; i < n; ++i)
     {
         if (!std::getline(testFile, line))
         {
             // Format, there must be n lines
-            retMessage = "NO";
             testFile.close();
-            return true;
+            return false;
         }
         removeCarriage(line);
+        Tstrings.push_back(line);
+    }
+
+    while (std::getline(testFile, line))
+    {
+        removeCarriage(line);
+        Rsets.push_back(line);
+    }
+
+
+    testFile.close();
+    return true;
+
+}
+
+bool runTest(const std::string &file, std::map<char, std::string> &results, std::string &retMessage)
+{
+
+    int n;
+    std::string s;
+    std::vector<std::string> T_line_strings;
+    std::vector<std::string> R_sets_strings;
+    bool retVal = false;
+    if (file.empty())
+    {
+        retVal = readInputFromStdin(n, s, T_line_strings, R_sets_strings);
+    }
+    else
+    {
+        retVal = readInputFromFile(file, n, s, T_line_strings, R_sets_strings);
+    }
+
+    if (!retVal)
+    {
+        retMessage = "NO";
+        return false;
+    }
+ 
+    if (s.empty() || !isAllLowercase(s))
+    {
+        // Format, string must be only lower case letters
+        retMessage = "NO";
+        return false;
+    }
+    std::map<char, int> repeats; // Map for repetitions of uppercase letters
+    std::set<char> upperCharsUsed; // Set for seeing what R sets we need
+    std::vector<std::pair<std::string, bool>> t_strings; // t strings, bool is to indicate if it is interesting
+
+    for (auto &&line : T_line_strings)
+    {
         // Check if string is a possible substring based on lowercase letters and
-        // find repetitions of upper case letters and
+        // check repetitions of upper case letters and
         // store what upper case letters are used.
         bool interestingLine = false;
         if (checkTStringAndFindRepeats(line, repeats, upperCharsUsed, s, interestingLine))
@@ -486,32 +590,29 @@ bool runTest(const std::string &file, std::string &retMessage)
         {
             // Bad format, or a lowercase letter from the t_string is not in string s
             retMessage = "NO";
-            testFile.close();
-            return true;
+            return false;
         }
     }
 
-    // if (repeats.empty()) {
-    //     std::cout << "No repeated patterns.\n";
-    // } else {
-    //     for (auto &[k, v] : repeats)
-    //         std::cout << "Character '" << k
-    //                 << "' repeated " << v << " times.\n";
-    // }
-
     std::map<char, std::vector<std::string>> Rsets;
+    std::set<char> RsetsFound; // Set to make sure we have a Rset for every upper char
 
-    size_t counter = 0; // Counter to make sure we have a set for every upper char
-    while (std::getline(testFile, line))
+    for (auto &&line : R_sets_strings)
     {
-        removeCarriage(line);
         // TODO: Maybe check that line is correct format
         // If a set is not used discard it
+        if (!std::isupper(line[0]))
+        {
+            // Format, R sets must begin with a capital letter
+            retMessage = "NO";
+            return false;
+        }
         if (upperCharsUsed.find(line[0]) == upperCharsUsed.end())
         {
             continue;
         }
-        counter++;
+        RsetsFound.insert(line[0]);
+    
         // Convert the R set string to a vector while getting rid of elements
         // that are not in string s or repetitions of that element that are not in s
         std::vector<std::string> strings = convertStringToContainer(line, s, repeats);
@@ -521,96 +622,95 @@ bool runTest(const std::string &file, std::string &retMessage)
         if (strings.empty())
         {
             retMessage = "NO";
-            testFile.close();
-            return true;
+            return false;
         }
 
         // Save the R set
         Rsets[line[0]] = strings;
     }
-    testFile.close();
 
-    if (counter != upperCharsUsed.size())
+    if (RsetsFound != upperCharsUsed)
     {
         // Format, we're missing a set
         retMessage = "NO";
-        return true;
+        return false;
     }
-
-    std::map<char, std::string> results;
-
-    printTStrings(t_strings);
-    printRSets(Rsets);
 
     // Remove any strings with only 1 character(1 or more of the same),  because they will always be true
     // as long as their R set has > 0 values. This can only be done after checking
     // if any sets have no solutions
     filterTstrings(t_strings);
-    // printTStrings(t_strings);
+
     size_t prevSize = results.size();
     size_t newSize = 0;
     int outcome = 0;
-    do
+    bool tryAll = false;
+
+    while (true)
     {
-        // std::cout << "Trying interesting strings:" << std::endl;
-        outcome = runRemoveElementsFromSets(t_strings, Rsets, s, results, retMessage);
+        outcome = runRemoveElementsFromSets(t_strings, Rsets, s, results, tryAll);
         if (outcome == 1)
         {
-            return true;
+            retMessage = "NO";
+            return false;
         }
         newSize = results.size();
-        if (prevSize == newSize) // No new sets only have 1 element
+        if (prevSize != newSize)
         {
-            continue;
+            replaceCapWithLower(t_strings, Rsets);
+            prevSize = newSize;
         }
-        prevSize = newSize;
-        for (auto &&string : t_strings)
+
+        // If success
+        if (outcome == 0)
         {
-            std::string newStr = "";
-            for (auto &&c : string.first)
+            if (!tryAll)
             {
-                if (std::isupper(c) && Rsets[c].size() == 1)
-                {
-                    newStr += Rsets[c][0];
-                }
-                else
-                {
-                    newStr += c;
-                }
-
+                tryAll = true; // try once more with tryAll = true
             }
-            string.first = newStr;
+            else
+            {
+                break; // already tried with tryAll, done
+            }
         }
-
-    } while (outcome == 2);
-    
-    // printRSets(Rsets);
-
-
-    // printTStrings(t_strings, true);
-    outcome = runRemoveElementsFromSets(t_strings, Rsets, s, results, retMessage, true);
-    if (outcome == 1)
-    {
-        return true;
     }
 
-    std::map<char, std::string> result = runAllCombos(t_strings, Rsets, s, retMessage);
+    bool result = runAllCombos(t_strings, Rsets, results, s);
 
-    if (result.empty())
+    if (!result)
     {
         retMessage = "NO";
-        return true;
+        return false;
     }
     else
     {
-        printReslt(result);
+        retMessage = "YES";
         return true;
+    }
+}
+
+void replaceCapWithLower(std::vector<std::pair<std::string, bool>> &t_strings, std::map<char, std::vector<std::string>> &Rsets)
+{
+    for (auto &&string : t_strings)
+    {
+        std::string newStr = "";
+        for (auto &&c : string.first)
+        {
+            if (std::isupper(c) && Rsets[c].size() == 1)
+            {
+                newStr += Rsets[c][0];
+            }
+            else
+            {
+                newStr += c;
+            }
+        }
+        string.first = newStr;
     }
 }
 
 void printReslt(std::map<char, std::string> result)
 {
-    std::cout << "Results: " << std::endl;
     for (auto &&[k, v] : result)
     {
         std::cout << k << ": " << v << std::endl;
