@@ -9,46 +9,20 @@
 #include <algorithm>
 #include "Project.h"
 
-const std::string FOLDERPATH = "tests/";
-const std::string TESTPREFIX = "test0";
-const std::string FILEEXTENSION = ".swe";
-const int FILEAMOUNT = 7;
-const bool USEFILES = true;
-
 bool checkTStringAndFindRepeats(const std::string &t_string, std::map<char, int> &repeats, std::set<char> &upperCharsUsed, const std::string &s, bool &interestingLine) {
-
+    // Check if string is a possible substring based on lowercase letters and
+    // check repetitions of upper case letters and
+    // store what upper case letters are used.
     bool valid = true;
-    char current = t_string[0];
+    char current = '\n';
     int count = 1;
     std::string lowercaseString = "";
-    if (std::isupper(current))
-    {
-        upperCharsUsed.insert(current);
-    }
-    else if (std::islower(current))
-    {
-        lowercaseString += current;
-        interestingLine = true;
-    }
-    else
-    {
-        valid = false;
-        return valid;
-    }
 
-    for (size_t i = 1; i < t_string.size(); ++i) {
+    for (size_t i = 0; i < t_string.size(); ++i) {
         if (std::isupper(t_string[i]))
         {
             upperCharsUsed.insert(t_string[i]);
-            if (s.find(lowercaseString) == std::string::npos)
-            {
-                valid = false;
-                break;
-            }
-            else
-            {
-                lowercaseString = "";
-            }
+            lowercaseString.clear();
         }
         else if (std::islower(t_string[i]))
         {
@@ -73,22 +47,20 @@ bool checkTStringAndFindRepeats(const std::string &t_string, std::map<char, int>
         if (t_string[i] == current) {
             count++;
         } else {
-            if (count > 1)
-            {
-                if (repeats.count(current) > 0)
-                {
-                    repeats[current] = std::max(count, repeats.at(current));
-                }
-                else
-                {
-                    repeats[current] = count;
-                }
-                interestingLine = true;
-            }
+            // handle repeated characters
+            updateRepeats(count, repeats, current, interestingLine);
             current = t_string[i];
             count = 1;
         }
     }
+    // handle last sequence of repeated characters
+    updateRepeats(count, repeats, current, interestingLine);
+
+    return valid;
+}
+
+void updateRepeats(int &count, std::map<char, int> &repeats, char &current, bool &interestingLine)
+{
     if (count > 1)
     {
         if (repeats.count(current) > 0)
@@ -101,8 +73,6 @@ bool checkTStringAndFindRepeats(const std::string &t_string, std::map<char, int>
         }
         interestingLine = true;
     }
-
-    return valid;
 }
 
 std::vector<std::string> simpleConvertStringToContainer(std::string&line)
@@ -129,6 +99,8 @@ std::vector<std::string> simpleConvertStringToContainer(std::string&line)
 
 std::vector<std::string> convertStringToContainer(std::string&line, const std::string &s, const std::map<char, int> &repeats)
 {
+    // Convert the R set string to a vector while getting rid of elements
+    // that are not in string s or repetitions of that element that are not in s
     std::vector<std::string> values;
     bool repeat  = repeats.find(line[0]) != repeats.end();
     // Find the part after ':'
@@ -179,11 +151,10 @@ std::vector<std::string> convertStringToContainer(std::string&line, const std::s
 }
 
 bool isSingleCharString(const std::string &s) {
-    if (s.empty()) return false; // optional, depends on whether "" counts
     return std::all_of(s.begin(), s.end(), [&](char c){ return c == s[0]; });
 }
 
-bool addStringToSet(std::vector<std::pair<std::string, bool>> &t_strings, const std::string &newStr, const bool &interestingLine) {
+bool addStringToTstrings(std::vector<std::pair<std::string, bool>> &t_strings, const std::string &newStr, const bool &interestingLine) {
     // Check if newStr is already a subset of an existing string
     for (const auto& s : t_strings) {
         if (s.first.find(newStr) != std::string::npos) {
@@ -209,6 +180,9 @@ bool addStringToSet(std::vector<std::pair<std::string, bool>> &t_strings, const 
 
 void filterTstrings(std::vector<std::pair<std::string, bool>> &t_strings)
 {
+    // Remove any strings with only 1 character(1 or more of the same),  because they will always be true
+    // as long as their R set has > 0 values. This can only be done after checking
+    // if any sets have no solutions
     for (auto it = t_strings.begin(); it != t_strings.end(); ) {
         if (isSingleCharString((*it).first)) {
             it = t_strings.erase(it); // erase returns the next iterator
@@ -550,7 +524,7 @@ bool runTest(const std::string &file, std::map<char, std::string> &results, std:
     std::string s;
     std::vector<std::string> T_line_strings;
     std::vector<std::string> R_sets_strings;
-    bool retVal = false;
+    bool retVal = true;
     if (file.empty())
     {
         retVal = readInputFromStdin(n, s, T_line_strings, R_sets_strings);
@@ -576,76 +550,54 @@ bool runTest(const std::string &file, std::map<char, std::string> &results, std:
     std::set<char> upperCharsUsed; // Set for seeing what R sets we need
     std::vector<std::pair<std::string, bool>> t_strings; // t strings, bool is to indicate if it is interesting
 
-    for (auto &&line : T_line_strings)
+    retVal = convertAndCheckTstrings(T_line_strings, s, repeats, upperCharsUsed, t_strings);
+    if (!retVal)
     {
-        if (line.size() > s.size())
-        {
-            retMessage = "NO";
-            return false;
-        }
-        // Check if string is a possible substring based on lowercase letters and
-        // check repetitions of upper case letters and
-        // store what upper case letters are used.
-        bool interestingLine = false;
-        if (checkTStringAndFindRepeats(line, repeats, upperCharsUsed, s, interestingLine))
-        {
-            addStringToSet(t_strings, line, interestingLine);
-        }
-        else
-        {
-            // Bad format, or a lowercase letter from the t_string is not in string s
-            retMessage = "NO";
-            return false;
-        }
+        retMessage = "NO";
+        return false;
     }
 
     std::map<char, std::vector<std::string>> Rsets;
     std::set<char> RsetsFound; // Set to make sure we have a Rset for every upper char
 
-    for (auto &&line : R_sets_strings)
+    retVal = convertAndCheckRsets(R_sets_strings, upperCharsUsed, RsetsFound, s, repeats, Rsets);
+    if (!retVal)
     {
-        // TODO: Maybe check that line is correct format
-        // If a set is not used discard it
-        if (!std::isupper(line[0]))
-        {
-            // Format, R sets must begin with a capital letter
-            retMessage = "NO";
-            return false;
-        }
-        if (upperCharsUsed.find(line[0]) == upperCharsUsed.end())
-        {
-            continue;
-        }
-        RsetsFound.insert(line[0]);
-    
-        // Convert the R set string to a vector while getting rid of elements
-        // that are not in string s or repetitions of that element that are not in s
-        std::vector<std::string> strings = convertStringToContainer(line, s, repeats);
-        // std::vector<std::string> strings = simpleConvertStringToContainer(line);
-        
-        // If any vector is empty, then there is no solution.
-        if (strings.empty())
-        {
-            retMessage = "NO";
-            return false;
-        }
-
-        // Save the R set
-        Rsets[line[0]] = strings;
-    }
-
-    if (RsetsFound != upperCharsUsed)
-    {
-        // Format, we're missing a set
         retMessage = "NO";
         return false;
     }
 
-    // Remove any strings with only 1 character(1 or more of the same),  because they will always be true
-    // as long as their R set has > 0 values. This can only be done after checking
-    // if any sets have no solutions
     filterTstrings(t_strings);
+    if (t_strings.empty())
+    {
+        createResults(results, Rsets);
+        retMessage = "YES";
+        return true;
+    }
 
+    retVal = testTstrings(results, t_strings, Rsets, s);
+    if (!retVal)
+    {
+        retMessage = "NO";
+        return false;
+    }
+
+    retVal = runAllCombos(t_strings, Rsets, results, s);
+
+    if (!retVal)
+    {
+        retMessage = "NO";
+        return false;
+    }
+    else
+    {
+        retMessage = "YES";
+        return true;
+    }
+}
+
+bool testTstrings(std::map<char, std::string> &results, std::vector<std::pair<std::string, bool>> &t_strings, std::map<char, std::vector<std::string>> &Rsets, std::string &s)
+{
     size_t prevSize = results.size();
     size_t newSize = 0;
     int outcome = 0;
@@ -656,7 +608,6 @@ bool runTest(const std::string &file, std::map<char, std::string> &results, std:
         outcome = runRemoveElementsFromSets(t_strings, Rsets, s, results, tryAll);
         if (outcome == 1)
         {
-            retMessage = "NO";
             return false;
         }
         newSize = results.size();
@@ -680,18 +631,69 @@ bool runTest(const std::string &file, std::map<char, std::string> &results, std:
         }
     }
 
-    bool result = runAllCombos(t_strings, Rsets, results, s);
+    return true;
+}
 
-    if (!result)
+bool convertAndCheckRsets(std::vector<std::string> &R_sets_strings, std::set<char> &upperCharsUsed, std::set<char> &RsetsFound, std::string &s, std::map<char, int> &repeats, std::map<char, std::vector<std::string>> &Rsets)
+{
+    for (auto &&line : R_sets_strings)
     {
-        retMessage = "NO";
+        // TODO: Maybe check that line is correct format
+        // If a set is not used discard it
+        if (!std::isupper(line[0]))
+        {
+            // Format, R sets must begin with a capital letter
+            return false;
+        }
+        if (upperCharsUsed.find(line[0]) == upperCharsUsed.end())
+        {
+            continue;
+        }
+        RsetsFound.insert(line[0]);
+        std::vector<std::string> strings = convertStringToContainer(line, s, repeats);
+        // std::vector<std::string> strings = simpleConvertStringToContainer(line);
+
+        // If vector is empty, then there is no solution.
+        if (strings.empty())
+        {
+            return false;
+        }
+
+        // Save the R set
+        Rsets[line[0]] = strings;
+    }
+
+    if (RsetsFound != upperCharsUsed)
+    {
+        // Format, we're missing a set
         return false;
     }
-    else
+    return true;
+}
+
+bool convertAndCheckTstrings(std::vector<std::string> &T_line_strings, std::string &s, std::map<char, int> &repeats, std::set<char> &upperCharsUsed, std::vector<std::pair<std::string, bool>> &t_strings)
+{
+    bool retFlag = true;
+    for (auto &&line : T_line_strings)
     {
-        retMessage = "YES";
-        return true;
+        if (line.size() > s.size())
+        {
+            retFlag = false;
+            break;
+        }
+        bool interestingLine = false;
+        if (checkTStringAndFindRepeats(line, repeats, upperCharsUsed, s, interestingLine))
+        {
+            addStringToTstrings(t_strings, line, interestingLine);
+        }
+        else
+        {
+            // Bad format, or a lowercase letter from the t_string is not in string s
+            retFlag = false;
+            break;
+        }
     }
+    return retFlag;
 }
 
 void replaceCapWithLower(std::vector<std::pair<std::string, bool>> &t_strings, std::map<char, std::vector<std::string>> &Rsets)
@@ -712,6 +714,15 @@ void replaceCapWithLower(std::vector<std::pair<std::string, bool>> &t_strings, s
         }
         string.first = newStr;
     }
+}
+
+void createResults(std::map<char, std::string> &results, std::map<char, std::vector<std::string>> &Rsets)
+{
+    for (auto &&[k, v] : Rsets)
+    {
+        results[k] = v[0];
+    }
+    
 }
 
 void printReslt(std::map<char, std::string> result)
