@@ -578,6 +578,11 @@ bool runTest(const std::string &file, std::map<char, std::string> &results, std:
 
     for (auto &&line : T_line_strings)
     {
+        if (line.size() > s.size())
+        {
+            retMessage = "NO";
+            return false;
+        }
         // Check if string is a possible substring based on lowercase letters and
         // check repetitions of upper case letters and
         // store what upper case letters are used.
