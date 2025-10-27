@@ -1,9 +1,6 @@
 #pragma once
 
 const std::string FOLDERPATH = "tests/";
-const std::string TESTPREFIX = "test0";
-const std::string FILEEXTENSION = ".swe";
-const int FILEAMOUNT = 7;
 const bool USEFILES = true;
 
 bool runTest(const std::string &file, std::map<char, std::string> &results, std::string &retMessage);

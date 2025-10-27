@@ -7,6 +7,7 @@
 #include <set>
 #include <chrono>
 #include <algorithm>
+#include <filesystem> // C++17 feature
 #include "Project.h"
 
 bool checkTStringAndFindRepeats(const std::string &t_string, std::map<char, int> &repeats, std::set<char> &upperCharsUsed, const std::string &s, bool &interestingLine) {
@@ -392,15 +393,16 @@ void solveInput()
 }
 
 void solveFiles()
-{
+{   
+    std::string path = FOLDERPATH; // Current directory
     auto programStart = std::chrono::high_resolution_clock::now();
 
-    for (int i = 1; i <= FILEAMOUNT; i++)
+    for (const auto &entry:std::filesystem::directory_iterator(path))
     {
         auto fileStart = std::chrono::high_resolution_clock::now();
 
         std::string retMessage = "";
-        std::string file = std::string(TESTPREFIX + std::to_string(i) + FILEEXTENSION);
+        std::string file = entry.path().filename();
         std::map<char, std::string> results;
         bool retVal = runTest(file, results, retMessage);
 
