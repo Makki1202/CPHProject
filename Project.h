@@ -1,7 +1,7 @@
 #pragma once
 
 const std::string FOLDERPATH = "tests/";
-const bool USEFILES = true;
+const bool USEFILES = false;
 
 bool runTest(const std::string &file, std::map<char, std::string> &results, std::string &retMessage);
 bool testTstrings(std::map<char, std::string> &results, std::vector<std::pair<std::string, bool>> &t_strings, std::map<char, std::vector<std::string>> &Rsets, std::string &s);
@@ -15,3 +15,4 @@ void printTStrings(std::vector<std::pair<std::string, bool>> &t_strings, const b
 void printReslt(std::map<char, std::string> result);
 void createResults(std::map<char, std::string> &results, std::map<char, std::vector<std::string>> &Rsets);
 void updateRepeats(int &count, std::map<char, int> &repeats, char &current, bool &interestingLine);
+bool isAllLowercase(const std::string& s);

@@ -151,7 +151,8 @@ std::vector<std::string> convertStringToContainer(std::string&line, const std::s
     return values;
 }
 
-bool isSingleCharString(const std::string &s) {
+bool isSingleCharString(const std::string &s) 
+{
     return std::all_of(s.begin(), s.end(), [&](char c){ return c == s[0]; });
 }
 
@@ -381,14 +382,17 @@ void solveInput()
     std::map<char, std::string> results;
     bool retVal = runTest("", results, retMessage);
 
-    std::cout << retMessage << std::endl;
     if (retVal)
     {
         if (!results.empty())
         {
-            std::cout << "Results:\n";
+            // std::cout << "Results:\n";
             printReslt(results);
         }
+    }
+    else
+    {
+        std::cout << retMessage << std::endl;
     }
 }
 
@@ -429,7 +433,8 @@ void solveFiles()
     std::cout << "Total execution time: " << duration.count() << " us" << std::endl;
 }
 
-bool isAllLowercase(const std::string& s) {
+bool isAllLowercase(const std::string& s) 
+{
     return std::all_of(s.begin(), s.end(), [](unsigned char c) {
         return std::islower(c);
     });
