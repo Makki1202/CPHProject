@@ -406,7 +406,7 @@ void solveFiles()
         auto fileStart = std::chrono::high_resolution_clock::now();
 
         std::string retMessage = "";
-        std::string file = entry.path().filename();
+        std::string file = entry.path().filename().string();
         std::map<char, std::string> results;
         bool retVal = runTest(file, results, retMessage);
 
