@@ -282,6 +282,7 @@ int runRemoveElementsFromSets(std::vector<std::pair<std::string, bool>> &t_strin
             if (list.size() == 1)
             {
                 results[key] = Rsets[key][0];
+                replaceCapWithLower(t_strings, Rsets);
             }
             if (list.empty())
             {
@@ -304,6 +305,12 @@ bool runAllCombos(std::vector<std::pair<std::string, bool>> &t_strings, std::map
         {
             variables.push_back(k);
         }
+    }
+
+    if (variables.empty())
+    {
+        // All uppercase letters already assigned
+        return true;
     }
 
     // Step 2: initialize index vector
@@ -358,8 +365,6 @@ bool runAllCombos(std::vector<std::pair<std::string, bool>> &t_strings, std::map
             if (i == 0)
                 done = true; // overflow
         }
-
-        if (variables.empty()) break;
     }
 
     return false;
@@ -617,14 +622,8 @@ bool testTstrings(std::map<char, std::string> &results, std::vector<std::pair<st
         {
             return false;
         }
-        newSize = results.size();
-        if (prevSize != newSize)
-        {
-            replaceCapWithLower(t_strings, Rsets);
-            prevSize = newSize;
-        }
 
-        // If success
+        // If no changes were made
         if (outcome == 0)
         {
             if (!tryAll)
