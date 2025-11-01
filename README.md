@@ -6,7 +6,7 @@ For using stdin:
     Set "USEFILES" to false in Project.h
 
 
-To run normally:
+To run normally, use at least C++17:
     g++ Project.cpp && ./a.out
 
 To run with perf:
