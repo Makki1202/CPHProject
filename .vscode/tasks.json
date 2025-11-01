@@ -1,0 +1,26 @@
+{
+    "tasks": [
+        {
+            "label": "build-debug",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-std=c++17",
+                "-g",
+                "-o",
+                "SuperStringWithExpansion",
+                "Project.cpp"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Build with debug symbols (g++ -std=c++17 -g)"
+        },
+    ],
+    "version": "2.0.0"
+}
