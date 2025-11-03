@@ -15,13 +15,13 @@ Requirements
 Compilation (Linux / macOS)
 -----------------------------------------
 
-g++ -std=c++17 -O2 -o SuperStringWithExpansion Project.cpp
+g++ -std=c++17 -o SuperStringWithExpansion Project.cpp
 
 -----------------------------------------
 Compilation (Windows)
 -----------------------------------------
 
-g++ -std=c++17 -O2 -o SuperStringWithExpansion.exe Project.cpp
+g++ -std=c++17 -o SuperStringWithExpansion.exe Project.cpp
 
 -----------------------------------------
 Execution (Linux / macOS)
