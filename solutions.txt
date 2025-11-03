@@ -1,0 +1,38 @@
+OBS: THERE MAY EXIST MORE THAN ONE SOLUTION
+
+Following answers are correct.
+test01.swe:
+NO
+test02.swe:
+A: b
+B: d
+C: c
+D: a
+test03.swe:
+NO
+test04.swe:
+B: g
+D: e
+E: b
+F: a
+G: d
+test05.swe:
+NO
+test06.swe:
+A: e
+B: a
+C: f
+D: b
+E: a
+F: d
+G: g
+test07.swe:
+A: a
+B: h
+C: e
+D: c
+E: d
+F: f
+G: i
+H: g
+I: b
